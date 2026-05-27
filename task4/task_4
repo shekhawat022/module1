@@ -1,0 +1,52 @@
+import pandas as pd
+
+
+df = pd.read_csv(r"C:\Users\ankit\OneDrive\Documents\module1\task4\superstore.csv", encoding='latin-1')
+
+print(df.head())
+print(df.columns.tolist())
+
+region_category = df.groupby(['Region', 'Category']).agg(
+    Total_Sales=('Sales', 'sum'),
+    Total_Profit=('Profit', 'sum')
+).round(2)
+
+print("\nSales & Profit by Region and Category:")
+print(region_category)
+
+sub_cat = df.groupby(['Region', 'Sub-Category'])['Sales'].sum().reset_index()
+top3 = sub_cat.groupby('Region').apply(
+    lambda x: x.nlargest(3, 'Sales')
+).reset_index(drop=True)
+
+print("\nTop 3 Sub-Categories per Region:")
+print(top3)
+
+df['Profit Margin %'] = ((df['Profit'] / df['Sales']) * 100).round(2)
+
+print("\nProfit Margin % added:")
+print(df[['Region', 'Category', 'Sales', 'Profit', 'Profit Margin %']].head(10))
+
+pivot = pd.pivot_table(df,
+                       values='Sales',
+                       index='Region',
+                       columns='Segment',
+                       aggfunc='mean').round(2)
+
+print("\nAvg Sales by Region and Segment:")
+print(pivot)
+
+df['Order Date'] = pd.to_datetime(df['Order Date'])
+df['Month'] = df['Order Date'].dt.to_period('M')
+
+monthly_profit = df.groupby('Month')['Profit'].sum()
+negative_months = monthly_profit[monthly_profit < 0]
+
+print("\nMonths with Negative Profit:")
+print(negative_months)
+
+df.set_index('Order Date', inplace=True)
+quarterly_sales = df['Sales'].resample('QE').sum().round(2)
+
+print("\nQuarterly Sales Trends:")
+print(quarterly_sales)
